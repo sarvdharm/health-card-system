@@ -1,102 +1,96 @@
 import streamlit as st
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import qrcode
 import pandas as pd
 from datetime import datetime
 import io
 
-# Page Configuration
-st.set_page_config(page_title="SDSKS Health Management System", layout="wide")
+# Page Config
+st.set_page_config(page_title="SDSKS Health System", layout="wide")
 
-# Database File Name
-DB_FILE = "sdsks_records.csv"
+DB_FILE = "sdsks_database.csv"
 
-# Function to save record to CSV
 def save_to_db(data):
     df = pd.DataFrame([data])
     df.to_csv(DB_FILE, mode='a', header=not pd.io.common.file_exists(DB_FILE), index=False)
 
-# Sidebar Menu
-st.sidebar.title("SDSKS Admin")
-choice = st.sidebar.radio("Navigation", ["Generate Health Card", "Records Dashboard (Admin)"])
+# --- SIDEBAR NAVIGATION ---
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2382/2382443.png", width=100)
+st.sidebar.title("SDSKS Portal")
+role = st.sidebar.radio("Login As:", ["Coordinator (User)", "NGO Head (Admin)"])
 
-if choice == "Generate Health Card":
-    st.title("🛡️ Family Health Card Generator")
-    st.info("Niche di gayi details bharein aur 'Save & Generate' par click karein.")
+# --- COORDINATOR DASHBOARD ---
+if role == "Coordinator (User)":
+    st.title("📋 Coordinator Dashboard")
+    st.subheader("Family Health Card Entry")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        h_name = st.text_input("Head of Family Name")
-        f_name = st.text_input("Father/Husband Name")
-        adh_no = st.text_input("Aadhar No (Last 4 Digits)")
-        coord_id = st.text_input("Coordinator ID/Name")
-    
-    with col2:
-        m2 = st.text_input("Family Member 2")
-        m3 = st.text_input("Family Member 3")
-        m4 = st.text_input("Family Member 4")
-        issue_date = datetime.now().strftime("%d-%m-%Y")
+    with st.form("entry_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            h_name = st.text_input("Head of Family Name")
+            f_name = st.text_input("Father/Husband Name")
+            adh_no = st.text_input("Aadhar No (Last 4 Digits)")
+        with col2:
+            coord_name = st.text_input("Your Name (Coordinator)")
+            members = st.text_area("Other Family Members (Comma separated)")
+        
+        submit = st.form_submit_button("Generate & Save Card")
 
-    if st.button("Save Data & Generate Card"):
-        if h_name and adh_no:
-            # --- CARD DESIGN LOGIC ---
+    if submit:
+        if h_name and adh_no and coord_name:
+            # Card Generation Logic
             img = Image.new('RGB', (1000, 600), (255, 255, 255))
             draw = ImageDraw.Draw(img)
-            
-            # Header
-            draw.rectangle([0, 0, 1000, 120], fill="#000000") # Black Header
-            draw.rectangle([0, 120, 1000, 150], fill="#FF9933") # Orange Strip
-            
-            # Text
+            draw.rectangle([0, 0, 1000, 120], fill="black")
             draw.text((80, 40), "SARV DHARM SMANYA KALYAN SAMITI", fill="white")
-            draw.text((350, 160), "FAMILY HEALTH PROTECTION CARD", fill="black")
             
-            # Details
-            draw.text((60, 230), f"Head: {h_name}", fill="black")
-            draw.text((60, 270), f"Father: {f_name}", fill="black")
-            draw.text((60, 310), f"Aadhar: XXXX-XXXX-{adh_no}", fill="black")
-            draw.line([60, 360, 940, 360], fill="gray", width=2)
-            draw.text((60, 380), f"Members: {m2}, {m3}, {m4}", fill="black")
+            # Text and QR
+            draw.text((60, 200), f"Name: {h_name} | Father: {f_name}", fill="black")
+            draw.text((60, 250), f"Aadhar: XXXX-XXXX-{adh_no}", fill="black")
+            qr = qrcode.make(f"SDSKS-{adh_no}").resize((180, 180))
+            img.paste(qr, (750, 180))
             
-            # QR Code
-            qr_data = f"SDSKS-{adh_no} | {h_name} | Verified"
-            qr = qrcode.make(qr_data).resize((200, 200))
-            img.paste(qr, (750, 200))
+            # Show Preview
+            st.image(img, caption="Preview")
             
-            # Footer
-            draw.text((60, 530), f"Date: {issue_date} | Coordinator: {coord_id}", fill="darkblue")
-            
-            # Display and Save
-            st.image(img, caption="Card Preview")
-            
-            # Database Update
-            new_data = {
-                "Date": issue_date, 
-                "Head_Name": h_name, 
-                "Aadhar_Last4": adh_no, 
-                "Coordinator": coord_id,
-                "Members": f"{m2}, {m3}, {m4}"
+            # Save Data
+            entry = {
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "Coordinator": coord_name,
+                "Family_Head": h_name,
+                "Aadhar_Last4": adh_no
             }
-            save_to_db(new_data)
-            
-            # Download Button
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            st.download_button("Download Card Now", buf.getvalue(), f"{h_name}_card.png")
-            st.success("Record Saved Successfully!")
+            save_to_db(entry)
+            st.success("Card data saved to Admin records!")
         else:
-            st.error("Please enter Name and Aadhar.")
+            st.error("Please fill all required fields!")
 
-elif choice == "Records Dashboard (Admin)":
-    st.title("📊 SDSKS Management Dashboard")
-    try:
-        df = pd.read_csv(DB_FILE)
-        st.metric("Total Cards Issued", len(df))
-        st.write("Sabhi coordinators ka data niche dekhein:")
-        st.dataframe(df, use_container_width=True)
+# --- ADMIN DASHBOARD ---
+elif role == "NGO Head (Admin)":
+    st.title("🔐 Admin Management Panel")
+    
+    # Password Protection
+    password = st.text_input("Enter Admin Password", type="password")
+    if password == "NGO@123":  # Aap is password ko badal sakte hain
+        st.success("Welcome, NGO Head!")
         
-        # Excel Download for Admin
-        csv = df.to_csv(index=False).encode('utf-8')
-        st.download_button("Download Full Report (CSV)", csv, "sdsks_report.csv", "text/csv")
-    except:
-        st.info("Abhi tak koi data save nahi hua hai.")
+        try:
+            df = pd.read_csv(DB_FILE)
+            
+            # Metrics
+            c1, c2 = st.columns(2)
+            c1.metric("Total Cards Issued", len(df))
+            c2.metric("Total Coordinators Active", df['Coordinator'].nunique())
+            
+            # Data Table
+            st.subheader("All Issued Records")
+            st.dataframe(df, use_container_width=True)
+            
+            # Download Data
+            csv = df.to_csv(index=False).encode('utf-8')
+            st.download_button("Download Full Excel Report", csv, "sdsks_full_report.csv", "text/csv")
+            
+        except FileNotFoundError:
+            st.info("No records found yet. Ask coordinators to start entries.")
+    elif password:
+        st.error("Incorrect Password!")
