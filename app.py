@@ -67,11 +67,11 @@ st.markdown("""
 # --- NAVIGATION BUTTONS (Image 30 Jaisa Layout) ---
 col_nav = st.columns(7)
 home_btn = col_nav[0].button("🏠 Home")
-doc_btn = col_nav[1].button("👨‍⚕️ Doctors")
+doc_btn = col_nav[1].button("👨‍⚕️ Our Partners Private Doctors/Hospitals")
 file_btn = col_nav[2].button("📄 Documents")
-lab_btn = col_nav[3].button("🔬 Labs")
-emp_btn = col_nav[4].button("👥 Employer")
-card_btn = col_nav[5].button("💳 Health Card")
+lab_btn = col_nav[3].button("🔬 Our Partner Labs")
+emp_btn = col_nav[4].button("👥 Co-ordinators/Staff Login")
+card_btn = col_nav[5].button("💳 Download Health Card")
 
 st.markdown("---")
 
