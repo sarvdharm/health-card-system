@@ -1,96 +1,98 @@
 import streamlit as st
-from PIL import Image, ImageDraw
-import qrcode
 import pandas as pd
 from datetime import datetime
+from PIL import Image, ImageDraw
+import qrcode
 import io
 
-# Page Config
-st.set_page_config(page_title="SDSKS Health System", layout="wide")
+# --- PAGE CONFIG & THEME ---
+st.set_page_config(page_title="SDSKS Digital Portal", layout="wide")
 
-DB_FILE = "sdsks_database.csv"
+# Custom CSS for NGO Theme (Greenish UI)
+st.markdown("""
+    <style>
+    .main { background-color: #f0f2f6; }
+    .stButton>button { background-color: #114b43; color: white; border-radius: 5px; width: 100%; }
+    .header-box { background-color: #114b43; padding: 20px; border-radius: 10px; color: white; text-align: center; }
+    </style>
+    """, unsafe_allow_html=True)
 
-def save_to_db(data):
+# --- DATABASE LOGIC ---
+DB_FILE = "sdsks_master_data.csv"
+def save_data(data):
     df = pd.DataFrame([data])
     df.to_csv(DB_FILE, mode='a', header=not pd.io.common.file_exists(DB_FILE), index=False)
 
-# --- SIDEBAR NAVIGATION ---
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/2382/2382443.png", width=100)
-st.sidebar.title("SDSKS Portal")
-role = st.sidebar.radio("Login As:", ["Coordinator (User)", "NGO Head (Admin)"])
+# --- SIDEBAR NAVIGATION (Role Based) ---
+st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A5N_HId_tW_DIsO_7o-xN4Xk8x6S0y5_iA&s", width=100)
+role = st.sidebar.selectbox("Login Role", ["Coordinator", "Block Head", "District Head", "Office/Admin"])
 
-# --- COORDINATOR DASHBOARD ---
-if role == "Coordinator (User)":
-    st.title("📋 Coordinator Dashboard")
-    st.subheader("Family Health Card Entry")
-    
-    with st.form("entry_form", clear_on_submit=True):
+# --- TOP NAVIGATION BUTTONS (Working Menu) ---
+st.markdown('<div class="header-box"><h1>सर्व धर्म समान कल्याण समिति</h1><p>Health and Equality - Everyone\'s Right</p></div>', unsafe_allow_html=True)
+nav_col = st.columns(6)
+b_home = nav_col[0].button("🏠 Home")
+b_docs = nav_col[1].button("👨‍⚕️ Doctors")
+b_file = nav_col[2].button("📄 Docs")
+b_lab = nav_col[3].button("🔬 Labs")
+b_card = nav_col[4].button("💳 Health Card")
+b_staff = nav_col[5].button("👥 Staff")
+
+# --- APP LOGIC BASED ON BUTTONS & ROLES ---
+
+# 1. DOCTORS SECTION
+if b_docs:
+    st.subheader("Available Doctors & Medical Staff")
+    st.info("Yahan aap apne NGO se jude doctors ki list aur unki availability dekh sakte hain.")
+    st.table(pd.DataFrame({"Doctor Name": ["Dr. Sharma", "Dr. Verma"], "Specialty": ["General", "Child Spl"], "Status": ["Online", "Offline"]}))
+
+# 2. LABS SECTION
+elif b_lab:
+    st.subheader("Partner Labs & Checkup Centers")
+    st.write("Free checkup camps ki jankari yahan milegi.")
+
+# 3. HEALTH CARD GENERATION (Main Work)
+elif b_card or role == "Coordinator":
+    st.subheader("💳 Digital Health Card System")
+    with st.expander("Naya Card Banayein (Form)", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
-            h_name = st.text_input("Head of Family Name")
-            f_name = st.text_input("Father/Husband Name")
-            adh_no = st.text_input("Aadhar No (Last 4 Digits)")
+            name = st.text_input("Beneficiary Name")
+            fname = st.text_input("Father/Husband Name")
+            aadhar = st.text_input("Aadhar (Last 4)")
         with col2:
-            coord_name = st.text_input("Your Name (Coordinator)")
-            members = st.text_area("Other Family Members (Comma separated)")
+            panchayat = st.text_input("Panchayat")
+            block = st.text_input("Block")
+            dist = st.text_input("District")
         
-        submit = st.form_submit_button("Generate & Save Card")
+        if st.button("Save & Generate PDF Card"):
+            if name and aadhar:
+                # Save to Database
+                entry = {"Date": datetime.now(), "Name": name, "Aadhar": aadhar, "Block": block, "Dist": dist, "Coordinator": role}
+                save_data(entry)
+                st.success(f"Record saved for {name}!")
+                # Card Preview logic here...
+            else:
+                st.warning("Please fill details.")
 
-    if submit:
-        if h_name and adh_no and coord_name:
-            # Card Generation Logic
-            img = Image.new('RGB', (1000, 600), (255, 255, 255))
-            draw = ImageDraw.Draw(img)
-            draw.rectangle([0, 0, 1000, 120], fill="black")
-            draw.text((80, 40), "SARV DHARM SMANYA KALYAN SAMITI", fill="white")
-            
-            # Text and QR
-            draw.text((60, 200), f"Name: {h_name} | Father: {f_name}", fill="black")
-            draw.text((60, 250), f"Aadhar: XXXX-XXXX-{adh_no}", fill="black")
-            qr = qrcode.make(f"SDSKS-{adh_no}").resize((180, 180))
-            img.paste(qr, (750, 180))
-            
-            # Show Preview
-            st.image(img, caption="Preview")
-            
-            # Save Data
-            entry = {
-                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "Coordinator": coord_name,
-                "Family_Head": h_name,
-                "Aadhar_Last4": adh_no
-            }
-            save_to_db(entry)
-            st.success("Card data saved to Admin records!")
-        else:
-            st.error("Please fill all required fields!")
-
-# --- ADMIN DASHBOARD ---
-elif role == "NGO Head (Admin)":
-    st.title("🔐 Admin Management Panel")
-    
-    # Password Protection
-    password = st.text_input("Enter Admin Password", type="password")
-    if password == "NGO@123":  # Aap is password ko badal sakte hain
-        st.success("Welcome, NGO Head!")
-        
+# 4. ADMIN / STAFF VIEW (Managing the system)
+elif role == "Office/Admin" or b_staff:
+    st.subheader("📊 NGO Management Dashboard")
+    pwd = st.text_input("Enter Admin Password", type="password")
+    if pwd == "admin123":
         try:
             df = pd.read_csv(DB_FILE)
+            st.metric("Total Cards Issued", len(df))
             
-            # Metrics
-            c1, c2 = st.columns(2)
-            c1.metric("Total Cards Issued", len(df))
-            c2.metric("Total Coordinators Active", df['Coordinator'].nunique())
-            
-            # Data Table
-            st.subheader("All Issued Records")
-            st.dataframe(df, use_container_width=True)
-            
-            # Download Data
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("Download Full Excel Report", csv, "sdsks_full_report.csv", "text/csv")
-            
-        except FileNotFoundError:
-            st.info("No records found yet. Ask coordinators to start entries.")
-    elif password:
-        st.error("Incorrect Password!")
+            tab1, tab2 = st.tabs(["Master Data", "Block-wise Report"])
+            with tab1:
+                st.dataframe(df)
+            with tab2:
+                st.bar_chart(df['Block'].value_counts())
+        except:
+            st.write("Abhi koi data nahi hai.")
+
+# 5. HOME (Default Page)
+else:
+    st.image("https://img.freepik.com/free-vector/medical-video-call-consultation-with-doctor_23-2148520864.jpg", use_column_width=True)
+    st.write("### Swasthya aur Seva, Har Ghar Tak")
+    st.write("Is portal ke madhyam se aap digital health cards manage kar sakte hain.")
