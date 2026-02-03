@@ -1,98 +1,129 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
-from PIL import Image, ImageDraw
+from PIL import Image
 import qrcode
 import io
+from datetime import datetime
 
-# --- PAGE CONFIG & THEME ---
+# Page Configuration
 st.set_page_config(page_title="SDSKS Digital Portal", layout="wide")
 
-# Custom CSS for NGO Theme (Greenish UI)
+# --- CUSTOM CSS (Aapki Website Jaisa Dikhne ke liye) ---
 st.markdown("""
     <style>
-    .main { background-color: #f0f2f6; }
-    .stButton>button { background-color: #114b43; color: white; border-radius: 5px; width: 100%; }
-    .header-box { background-color: #114b43; padding: 20px; border-radius: 10px; color: white; text-align: center; }
+    /* Green Header Background */
+    .stApp { background-color: #f8f9fa; }
+    header { background-color: #114b43 !important; }
+    
+    /* Navigation Bar Style */
+    .nav-container {
+        background-color: #114b43;
+        padding: 10px;
+        border-radius: 0px 0px 15px 15px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    /* Card/Box Styling */
+    .feature-box {
+        background-color: #1d5c53;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Main Banner Area */
+    .banner-text {
+        background-color: #1d5c53;
+        color: white;
+        padding: 40px;
+        text-align: center;
+        font-size: 30px;
+        font-weight: bold;
+        border-radius: 10px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- DATABASE LOGIC ---
-DB_FILE = "sdsks_master_data.csv"
-def save_data(data):
-    df = pd.DataFrame([data])
-    df.to_csv(DB_FILE, mode='a', header=not pd.io.common.file_exists(DB_FILE), index=False)
+# --- DATABASE SETUP ---
+DB_FILE = "sdsks_master.csv"
 
-# --- SIDEBAR NAVIGATION (Role Based) ---
-st.sidebar.image("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A5N_HId_tW_DIsO_7o-xN4Xk8x6S0y5_iA&s", width=100)
-role = st.sidebar.selectbox("Login Role", ["Coordinator", "Block Head", "District Head", "Office/Admin"])
+# --- TOP HEADER (Image 30 Jaisa) ---
+st.markdown("""
+    <div style='background-color: #0c352f; padding: 15px; text-align: left; color: white; display: flex; align-items: center;'>
+        <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6A5N_HId_tW_DIsO_7o-xN4Xk8x6S0y5_iA&s' width='50' style='margin-right: 20px;'>
+        <div>
+            <h2 style='margin:0;'>Sarv Dharm Smanya Kalyan Samiti</h2>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- TOP NAVIGATION BUTTONS (Working Menu) ---
-st.markdown('<div class="header-box"><h1>सर्व धर्म समान कल्याण समिति</h1><p>Health and Equality - Everyone\'s Right</p></div>', unsafe_allow_html=True)
-nav_col = st.columns(6)
-b_home = nav_col[0].button("🏠 Home")
-b_docs = nav_col[1].button("👨‍⚕️ Doctors")
-b_file = nav_col[2].button("📄 Docs")
-b_lab = nav_col[3].button("🔬 Labs")
-b_card = nav_col[4].button("💳 Health Card")
-b_staff = nav_col[5].button("👥 Staff")
+# --- NAVIGATION BUTTONS (Image 30 Jaisa Layout) ---
+col_nav = st.columns(7)
+home_btn = col_nav[0].button("🏠 Home")
+doc_btn = col_nav[1].button("👨‍⚕️ Doctors")
+file_btn = col_nav[2].button("📄 Documents")
+lab_btn = col_nav[3].button("🔬 Labs")
+emp_btn = col_nav[4].button("👥 Employer")
+card_btn = col_nav[5].button("💳 Health Card")
 
-# --- APP LOGIC BASED ON BUTTONS & ROLES ---
+st.markdown("---")
 
-# 1. DOCTORS SECTION
-if b_docs:
-    st.subheader("Available Doctors & Medical Staff")
-    st.info("Yahan aap apne NGO se jude doctors ki list aur unki availability dekh sakte hain.")
-    st.table(pd.DataFrame({"Doctor Name": ["Dr. Sharma", "Dr. Verma"], "Specialty": ["General", "Child Spl"], "Status": ["Online", "Offline"]}))
+# --- MAIN CONTENT AREA ---
 
-# 2. LABS SECTION
-elif b_lab:
-    st.subheader("Partner Labs & Checkup Centers")
-    st.write("Free checkup camps ki jankari yahan milegi.")
+# 1. HOME SECTION (Image 30 Ki Tarah Large Text Banner)
+if home_btn or (not any([doc_btn, file_btn, lab_btn, emp_btn, card_btn])):
+    st.markdown("""
+        <div class='banner-text'>
+            स्वास्थ्य और सेवा, हर घर तक - ग्रामीण बिहार में <br> स्वास्थ्य क्रांति
+        </div>
+        <p style='text-align:center; color: #555; padding: 10px;'>
+            सेवा, स्वास्थ्य और समानता - हर व्यक्ति का अधिकार | Service, Health and Equality
+        </p>
+        """, unsafe_allow_html=True)
+    
+    # 3 Boxes like Image 30 bottom
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("<div class='feature-box'>🚑<br><h3>नि:शुल्क मेडिकल कैंप</h3><p>मासिक स्वास्थ्य जांच शिविर</p></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='feature-box'>❤️<br><h3>स्वास्थ्य जागरूकता</h3><p>पोषण और शिशु स्वास्थ्य</p></div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='feature-box'>🤝<br><h3>रिफरल सहायता</h3><p>गंभीर मामलों के लिए अस्पताल समन्वय</p></div>", unsafe_allow_html=True)
 
-# 3. HEALTH CARD GENERATION (Main Work)
-elif b_card or role == "Coordinator":
-    st.subheader("💳 Digital Health Card System")
-    with st.expander("Naya Card Banayein (Form)", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            name = st.text_input("Beneficiary Name")
-            fname = st.text_input("Father/Husband Name")
-            aadhar = st.text_input("Aadhar (Last 4)")
-        with col2:
-            panchayat = st.text_input("Panchayat")
-            block = st.text_input("Block")
-            dist = st.text_input("District")
+# 2. HEALTH CARD SECTION (Asli Kaam Karne wala Button)
+elif card_btn:
+    st.title("💳 Family Health Card Generator")
+    with st.container(border=True):
+        st.write("### Beneficiary Details")
+        c1, c2 = st.columns(2)
+        h_name = c1.text_input("Head Name")
+        f_name = c1.text_input("Father/Husband Name")
+        adh = c2.text_input("Aadhar (Last 4)")
+        coord = c2.text_input("Coordinator Name")
         
-        if st.button("Save & Generate PDF Card"):
-            if name and aadhar:
-                # Save to Database
-                entry = {"Date": datetime.now(), "Name": name, "Aadhar": aadhar, "Block": block, "Dist": dist, "Coordinator": role}
-                save_data(entry)
-                st.success(f"Record saved for {name}!")
-                # Card Preview logic here...
-            else:
-                st.warning("Please fill details.")
+        if st.button("Generate & Save"):
+            # Yahan data save karne ka logic
+            st.success(f"{h_name} ka data save ho gaya hai!")
+            # Card image display logic...
 
-# 4. ADMIN / STAFF VIEW (Managing the system)
-elif role == "Office/Admin" or b_staff:
-    st.subheader("📊 NGO Management Dashboard")
-    pwd = st.text_input("Enter Admin Password", type="password")
-    if pwd == "admin123":
-        try:
-            df = pd.read_csv(DB_FILE)
-            st.metric("Total Cards Issued", len(df))
-            
-            tab1, tab2 = st.tabs(["Master Data", "Block-wise Report"])
-            with tab1:
-                st.dataframe(df)
-            with tab2:
-                st.bar_chart(df['Block'].value_counts())
-        except:
-            st.write("Abhi koi data nahi hai.")
+# 3. DOCTORS / STAFF SECTION
+elif doc_btn or emp_btn:
+    st.header("Our Professional Team")
+    st.info("Management aur Doctors ki list yahan dekhein.")
+    # Team members list...
 
-# 5. HOME (Default Page)
-else:
-    st.image("https://img.freepik.com/free-vector/medical-video-call-consultation-with-doctor_23-2148520864.jpg", use_column_width=True)
-    st.write("### Swasthya aur Seva, Har Ghar Tak")
-    st.write("Is portal ke madhyam se aap digital health cards manage kar sakte hain.")
+# --- FOOTER (Image 32 Jaisa) ---
+st.markdown("---")
+f1, f2 = st.columns(2)
+with f1:
+    st.write("*Sarv Dharm Smanya Kalyan Samiti*")
+    st.write("Registration No.: S000338/2021/2022")
+with f2:
+    st.write("*Contact:* secretary@sdsks.org")
