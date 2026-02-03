@@ -34,8 +34,8 @@ btn_home = col_nav[0].button("🏠 Home")
 btn_docs_h = col_nav[1].button("👨‍⚕️ Private Doctors")
 btn_docum = col_nav[2].button("📄 Documents")
 btn_labs = col_nav[3].button("🔬 Partner Labs")
-btn_login = col_nav[4].button("👥 Staff Login")
-btn_card = col_nav[5].button("💳 Download Card")
+btn_login = col_nav[4].button("👥 Co-ordinators Login")
+btn_card = col_nav[5].button("💳 Download Health Card Card")
 
 st.markdown("---")
 
@@ -89,14 +89,49 @@ elif btn_login:
 
 # 6. DOWNLOAD HEALTH CARD (Asli Kaam)
 elif btn_card:
-    st.header("💳 Generate Family Health Card")
-    with st.form("card_form"):
-        col1, col2 = st.columns(2)
-        h_name = col1.text_input("Head of Family")
-        f_name = col1.text_input("Father/Husband Name")
-        adh_no = col2.text_input("Aadhar (Last 4)")
-        p_name = col2.text_input("Panchayat")
-        submit = st.form_submit_button("Save & Generate Card")
+  <?php
+include 'config.php';
+
+$found = false;
+if (isset($_POST['search'])) {
+    $search = $_POST['search_val'];
+    // Aadhar ya Mobile dono se check karega
+    $sql = "SELECT id FROM health_cards WHERE aadhar='$search' OR mobile='$search' LIMIT 1";
+    $res = $conn->query($sql);
+    if ($res->num_rows > 0) {
+        $row = $res->fetch_assoc();
+        header("Location: print_card.php?id=" . $row['id']);
+    } else {
+        $error = "Koi record nahi mila. Kripya sahi Aadhar ya Mobile daalein.";
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download Health Card</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; background: #eef2f3; }
+        .search-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { width: 100%; padding: 15px; background: #1a237e; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="search-box">
+        <h2 style="color:#1a237e;">Download Health Card</h2>
+        <p style="color:#666;">Enter Aadhar or Mobile Number</p>
+        
+        <?php if(isset($error)) echo "<p style='color:red;'>$error</p>"; ?>
+
+        <form method="POST">
+            <input type="number" name="search_val" placeholder="Aadhar / Mobile Number" required>
+            <button type="submit" name="search">Find My Card</button>
+        </form>
+    </div>
+</body>
+</html>
         
         if submit:
             if h_name and adh_no:
