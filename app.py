@@ -1,91 +1,84 @@
 import streamlit as st
 import pandas as pd
 import os
+from datetime import datetime
 
-# 1. Page Config & CSS (Website Look)
-st.set_page_config(page_title="SDSKS Digital Portal", layout="wide")
+# --- 1. CONFIG & DATABASE ---
+st.set_page_config(page_title="SDSKS Management System", layout="wide")
 
+USER_DB = "users_registry.csv"
+CARD_DB = "health_cards.csv"
+
+# Database initialize karna (XAMPP config jaisa)
+def init_db():
+    if not os.path.exists(USER_DB):
+        pd.DataFrame(columns=['UserID', 'Name', 'Pass', 'Role', 'ParentID', 'Status']).to_csv(USER_DB, index=False)
+    if not os.path.exists(CARD_DB):
+        pd.DataFrame(columns=['Date', 'Head', 'Aadhar', 'Panchayat', 'CreatedBy']).to_csv(CARD_DB, index=False)
+
+init_db()
+
+# --- 2. UI DESIGN (Image 33 jaisa professional look) ---
 st.markdown("""
     <style>
     .main-header { background-color: #0c352f; color: white; padding: 20px; text-align: center; border-radius: 10px; }
-    .nav-btn { background-color: #1a7b8c; color: white; border-radius: 5px; text-align: center; padding: 10px; cursor: pointer; }
-    .footer { background-color: #0c352f; color: white; padding: 20px; text-align: center; margin-top: 50px; }
+    .stButton>button { background-color: #1a7b8c; color: white; border-radius: 8px; width: 100%; font-weight: bold; }
+    .card-box { border: 1px solid #ddd; padding: 15px; border-radius: 10px; background-color: #f9f9f9; }
     </style>
     <div class="main-header">
         <h1>Sarv Dharm Smanya Kalyan Samiti</h1>
-        <p>सेवा, स्वास्थ्य और समानता - हर व्यक्ति का अधिकार</p>
+        <p>स्वास्थ्य और सेवा, हर घर तक - ग्रामीण बिहार में स्वास्थ्य क्रांति</p>
     </div>
 """, unsafe_allow_html=True)
 
-# 2. Database Initialization
-USER_DB = "users.csv"
-if not os.path.exists(USER_DB):
-    pd.DataFrame(columns=['Name', 'Email', 'Mobile', 'Role', 'Status']).to_csv(USER_DB, index=False)
-
-# 3. Navigation Menu (Image 33 jaisa)
-st.write("---")
+# --- 3. NAVIGATION ---
 cols = st.columns(6)
-b_home = cols[0].button("🏠 Home")
-b_docs = cols[1].button("👨‍⚕️ Doctors")
-b_legal = cols[2].button("📄 Documents")
-b_labs = cols[3].button("🔬 Labs")
-b_login = cols[4].button("👥 Staff Login")
-b_card = cols[5].button("💳 Health Card")
+btn_home = cols[0].button("🏠 Home")
+btn_docs = cols[1].button("👨‍⚕️ Doctors")
+btn_legal = cols[2].button("📄 Documents")
+btn_labs = cols[3].button("🔬 Labs")
+btn_login = cols[4].button("👥 Staff Login")
+btn_card = cols[5].button("💳 Health Card")
 
-# Page State
-if 'page' not in st.session_state:
-    st.session_state.page = 'home'
+if "page" not in st.session_state: st.session_state.page = "home"
+if "logged_in" not in st.session_state: st.session_state.logged_in = False
 
-if b_home: st.session_state.page = 'home'
-if b_docs: st.session_state.page = 'doctors'
-if b_legal: st.session_state.page = 'legal'
-if b_labs: st.session_state.page = 'labs'
-if b_login: st.session_state.page = 'login'
-if b_card: st.session_state.page = 'card'
+if btn_home: st.session_state.page = "home"
+if btn_login: st.session_state.page = "login"
+if btn_card: st.session_state.page = "card"
 
-# 4. Dashboard Content Sections
-if st.session_state.page == 'home':
-    st.markdown("""
-        <div style='background-color: #1d5c53; color: white; padding: 40px; text-align: center; border-radius: 15px;'>
-            <h1 style='font-size: 35px;'>स्वास्थ्य और सेवा, हर घर तक - ग्रामीण बिहार में स्वास्थ्य क्रांति</h1>
-        </div>
-    """, unsafe_allow_html=True)
-    
+st.write("---")
+
+# --- 4. LOGIC SECTIONS ---
+
+# PAGE: HOME
+if st.session_state.page == "home":
+    st.image("https://img.freepik.com/free-vector/medical-care-concept-landing-page_52683-20202.jpg", use_container_width=True)
+    st.write("### Humari Team (Image 1000102887 jaisa)")
     c1, c2, c3 = st.columns(3)
-    with c1: st.info("🚑 *नि:शुल्क मेडिकल कैंप*")
-    with c2: st.success("❤️ *स्वास्थ्य जागरूकता*")
-    with c3: st.warning("🤝 *रिफरल सहायता*")
+    c1.info("*President*: Shailesh Kumar")
+    c2.info("*Secretary*: Surendra Jha Suman")
+    c3.info("*Treasurer*: Satish Kumar")
 
-elif st.session_state.page == 'login':
-    st.subheader("👥 Coordinator & Staff Portal")
-    t1, t2 = st.tabs(["Login", "Registration"])
-    
-    with t2:
-        with st.form("reg_form"):
-            name = st.text_input("Full Name")
-            email = st.text_input("Email ID")
-            mob = st.text_input("Mobile No")
-            role = st.selectbox("Role", ["Panchayat", "Block", "District"])
-            if st.form_submit_button("Submit Application"):
-                st.success("Application submitted! Admin approval pending.")
-    
-    with t1:
-        u = st.text_input("UserID")
-        p = st.text_input("Password", type="password")
-        if st.button("Enter Dashboard"):
-            if u == "admin" and p == "master786":
-                st.session_state.is_admin = True
-                st.success("Welcome Admin!")
+# PAGE: LOGIN & DASHBOARD
+elif st.session_state.page == "login":
+    if not st.session_state.logged_in:
+        st.subheader("🔐 Staff Login")
+        u_id = st.text_input("UserID (Mobile)")
+        u_pw = st.text_input("Password", type="password")
+        
+        if st.button("Login"):
+            # Admin Login
+            if u_id == "admin" and u_pw == "ngo786":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "Admin"
+                st.rerun()
+            # Coordinator Login
             else:
-                st.error("Invalid Credentials or Not Approved.")
-
-elif st.session_state.page == 'card':
-    st.header("💳 Family Health Card")
-    st.warning("Kripya pehle Staff Login karein taaki aap card bana saken.")
-
-# 5. Footer (Image 1000102887 jaisa)
-st.markdown("""
-    <div class="footer">
-        <p>Registration No.: S000338/2021/2022 | Contact: secretary@sdsks.org</p>
-    </div>
-""", unsafe_allow_html=True)
+                df = pd.read_csv(USER_DB)
+                user = df[(df['UserID'].astype(str) == u_id) & (df['Pass'].astype(str) == u_pw)]
+                if not user.empty:
+                    st.session_state.logged_in = True
+                    st.session_state.user_id = u_id
+                    st.session_state.user_role = user.iloc[0]['Role']
+                    st.session_state.user_name
