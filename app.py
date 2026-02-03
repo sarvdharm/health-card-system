@@ -31,10 +31,10 @@ st.markdown('<div class="main-title"><h1>Sarv Dharm Smanya Kalyan Samiti</h1></d
 # Buttons Row (Image 33 Layout)
 col_nav = st.columns([1, 1.5, 1.2, 1.2, 1.5, 1.5])
 btn_home = col_nav[0].button("🏠 Home")
-btn_docs_h = col_nav[1].button("👨‍⚕️ Private Doctors")
+btn_docs_h = col_nav[1].button("👨‍⚕️ Partner Private Doctors/Hospitals")
 btn_docum = col_nav[2].button("📄 Documents")
 btn_labs = col_nav[3].button("🔬 Partner Labs")
-btn_login = col_nav[4].button("👥 Co-ordinators Login")
+btn_login = col_nav[4].button("👥 Co-ordinators/Staff Login")
 btn_card = col_nav[5].button("💳 Download Health Card Card")
 
 st.markdown("---")
