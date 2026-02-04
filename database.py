@@ -3,7 +3,7 @@ import os
 
 USER_DB = "users_registry.csv"
 CARD_DB = "health_cards.csv"
-LOGO_URL = "https://raw.githubusercontent.com/your-username/your-repo/main/logo.jpg" # Yahan apne logo ka asli link daalein
+LOGO_URL = "https://raw.githubusercontent.com/your-username/your-repo/main/logo.jpg" 
 
 def init_db():
     if not os.path.exists(USER_DB):
